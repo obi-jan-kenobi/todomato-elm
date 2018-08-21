@@ -13,7 +13,7 @@ main =
 
 type alias Model =
     { todos : List Todo
-    , active : Maybe Todo
+    , active : Maybe TodoState
     , todo : String
     }
 
@@ -30,6 +30,8 @@ type Msg
     = Todo String
     | Add
     | Select Todo
+    | Start
+    | Stop
 
 
 view : Model -> Html Msg
@@ -43,8 +45,11 @@ view model =
             , text <|
                 (\mt ->
                     case mt of
-                        Just todo ->
-                            todo.description
+                        Just (Running t) ->
+                            t.description
+
+                        Just (Stopped t) ->
+                            t.description
 
                         Nothing ->
                             "none"
@@ -70,8 +75,22 @@ update msg model =
 
         Select todo ->
             { model
-                | active = Just todo
+                | active = Just <| Stopped todo
             }
+
+        Start ->
+            case model.active of
+                Just (Stopped todo) ->
+                    { model | active = Just (Running todo) }
+
+                Just (Running todo) ->
+                    model
+
+                Nothing ->
+                    model
+
+        Stop ->
+            model
 
 
 type alias Entity a =
@@ -85,6 +104,11 @@ type alias Todo =
         , cycles : Int
         , completed : Bool
         }
+
+
+type TodoState
+    = Running Todo
+    | Stopped Todo
 
 
 todoItem : Todo -> Html Msg
